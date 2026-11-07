@@ -42,6 +42,7 @@ button:active{transform:scale(.97)}
 .overlay .box p{margin:8px 0;font-size:15px}
 .overlay .box .big{font-size:42px}
 .overlay .box button{margin-top:10px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111;color:#fff;border:2px solid var(--gold);padding:10px 18px;border-radius:999px;font-size:15px;font-weight:700;z-index:60;box-shadow:0 4px 16px rgba(0,0,0,.4);white-space:nowrap}
 .hidden{display:none!important}
 </style>
 </head>
@@ -55,6 +56,7 @@ button:active{transform:scale(.97)}
 <div class="stat"><b id="score">۰</b><small>امتیاز</small></div>
 <div class="stat"><b id="best">۰</b><small>بهترین</small></div>
 </div>
+<div id="modeBadge" class="hidden" style="text-align:center;color:#f5c518;font-size:13px;font-weight:700;margin:0 0 4px">♾️ مود بی‌نهایت — رکوردی</div>
 
 <div class="board-wrap"><div class="board" id="board"></div></div>
 
@@ -72,6 +74,7 @@ button:active{transform:scale(.97)}
 <div class="big">🦭✨</div>
 <h2>گوبی‌ها</h2>
 <button class="btn-main" id="playBtn" style="font-size:18px;padding:14px 28px">▶ شروع کن</button>
+<button class="btn-ghost" id="playEndlessBtn" style="font-size:18px;padding:14px 28px">♾️ بی‌نهایت (رکوردی)</button>
 <p style="font-size:13px;color:#555">برای شنیدن صدا، اول روی شروع بزن.</p>
 </div></div>
 
@@ -82,6 +85,8 @@ button:active{transform:scale(.97)}
 <p>امتیاز: <b id="endScore">۰</b> • بهترین: <b id="endBest">۰</b></p>
 <button class="btn-main" id="againBtn" style="font-size:17px;padding:13px 26px">↺ دوباره بازی کن</button>
 </div></div>
+
+<div class="toast hidden" id="toast"></div>
 
 <script>
 "use strict";
@@ -98,8 +103,9 @@ const $=id=>document.getElementById(id);
 const boardEl=$("board");
 let board=Array(9).fill(null);
 let score=0, merges=0, best=+(localStorage.getItem("goobies-best")||0);
-let selected=null, running=false, over=false, won=false, autoMode=false;
-let spawnTimer=null, autoTimer=null;
+let selected=null, running=false, over=false, won=false, autoMode=false, endless=false;
+let spawnTimer=null, autoTimer=null, toastTimer=null;
+function showToast(msg){ const t=$("toast"); t.textContent=msg; t.classList.remove("hidden"); if(toastTimer) clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.add("hidden"),1800); }
 
 /* ---------- character art: only the photos the user sent (tiers 0-5) ---------- */
 const CHAR_IMG={
@@ -163,15 +169,17 @@ function render(){
  $("score").textContent=fa(score); $("best").textContent=fa(best);
 }
 function spawnInterval(){
-  const e=emptyCells().length;
-  if(e<=2) return 350; // one or two spots left: finish fast, no waiting
-  if(e<=4&&!hasMerge()) return 350; // several characters left but none mergeable: fill fast
+  if(fastFillNeeded()) return 350; // stuck or one character left: the next tick fills every empty cell at once
   return Math.max(900,2000-merges*30); // calm pace: a new goobie every ~2s at first, faster only as you merge more
 }
 function emptyCells(){return board.map((v,i)=>v===null?i:-1).filter(i=>i>=0);}
 function fastFillNeeded(){
   const e=emptyCells().length;
-  return e>0&&e<9&&(e<=2||!hasMerge()); // stuck (nothing mergeable) or nearly full — never on a fresh empty board
+  // ONLY these two states fill fast — never just because the board is nearly full:
+  // 1) only one character left on the board (the player merged everything else)
+  // 2) several characters left but none of them mergeable
+  // both are exactly "no mergeable pair"; if a pair exists, spawns stay slow, one by one
+  return e>0&&e<9&&!hasMerge();
 }
 function fillAllEmpty(){
   const e=emptyCells(); // every empty cell at once, in a fraction of a second — no waiting cell by cell
@@ -211,7 +219,10 @@ function onCell(i,el){
    render();
    const cell=boardEl.children[to]; if(cell){cell.classList.add("merge"); const f=document.createElement("div"); f.className="float"; f.textContent="+"+fa(TIERS[board[to]].pts); cell.appendChild(f);}
    sfx.merge(board[to]);
-   if(board[to]===5&&!won){won=true; setTimeout(()=>endGame(true),450);}
+   if(board[to]===5&&!won){
+     if(endless){ showToast("🎉 فردی رو ساختی! ادامه بده"); playMergeSound(5); } // endless/record mode: reaching Freddy never ends the game
+     else {won=true; setTimeout(()=>endGame(true),450);}
+   }
    // after a merge the board can be stuck: fill every empty cell at once,
    // 300ms later only so the merge itself is still seen — still a fraction of a second
    if(!won) setTimeout(()=>{ if(running&&!over&&fastFillNeeded()){ fillAllEmpty(); checkEnd(); } },300);
@@ -220,9 +231,11 @@ function onCell(i,el){
    setTimeout(()=>{selected=null; render();},300);
  }
 }
-function startGame(){
+function startGame(mode){
+ if(mode) endless=(mode==="endless"); // no mode given: keep the last chosen mode
  preloadMergeSounds();
  board=Array(9).fill(null); score=0; merges=0; selected=null; over=false; won=false; running=true; autoMode=false;
+ $("modeBadge").classList.toggle("hidden",!endless);
  if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
  $("startOverlay").classList.add("hidden"); $("endOverlay").classList.add("hidden");
  $("startBtn").textContent="⏸ توقف"; $("autoBtn").textContent="🎬 تماشا";
@@ -232,7 +245,7 @@ function startGame(){
  spawnTimer=setInterval(()=>{ if(spawnTimer) clearInterval(spawnTimer); spawnTimer=setInterval(spawnOne,spawnInterval()); spawnOne(); },spawnInterval());
  render();
 }
-function stopGame(){running=false; if(spawnTimer){clearInterval(spawnTimer);spawnTimer=null;} if(autoTimer){clearInterval(autoTimer);autoTimer=null;} autoMode=false; $("startBtn").textContent="▶ شروع"; $("autoBtn").textContent="🎬 تماشا";}
+function stopGame(){running=false; if(spawnTimer){clearInterval(spawnTimer);spawnTimer=null;} if(autoTimer){clearInterval(autoTimer);autoTimer=null;} autoMode=false; $("startBtn").textContent="▶ شروع"; $("autoBtn").textContent="🎬 تماشا"; $("modeBadge").classList.add("hidden");}
 function endGame(win){
  over=true; running=false;
  if(spawnTimer){clearInterval(spawnTimer);spawnTimer=null;}
@@ -268,8 +281,9 @@ function autoPlay(){
 
 /* ---------- wire up ---------- */
 $("startBtn").addEventListener("click",()=>{ if(running&&!autoMode){stopGame();} else if(!running){startGame();} else {stopGame();} });
-$("playBtn").addEventListener("click",startGame);
-$("againBtn").addEventListener("click",startGame);
+$("playBtn").addEventListener("click",()=>startGame("normal"));
+$("playEndlessBtn").addEventListener("click",()=>startGame("endless"));
+$("againBtn").addEventListener("click",()=>startGame());
 $("resetBtn").addEventListener("click",()=>{stopGame(); board=Array(9).fill(null); score=0; merges=0; selected=null; over=false; won=false; render();});
 $("autoBtn").addEventListener("click",autoPlay);
 $("soundBtn").addEventListener("click",()=>{soundOn=!soundOn; $("soundBtn").textContent=soundOn?"🔊 صدا: روشن":"🔇 صدا: خاموش"; if(soundOn) playMergeSound(1);});
