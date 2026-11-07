@@ -292,11 +292,14 @@ function autoPlay(){
  autoTimer=setInterval(()=>{
    if(!autoMode) return;
    const e=emptyCells();
-   if(e.length){const i=e[Math.floor(Math.random()*e.length)]; board[i]=0; render(); const c=boardEl.children[i]; if(c)c.classList.add("pop"); return;}
-   // full: merge a random pair like the reel, then keep going
    const pairs=[]; for(let a=0;a<9;a++)for(let b=a+1;b<9;b++) if(board[a]!==null&&board[a]===board[b]) pairs.push([a,b]);
-   if(pairs.length){const [a,b]=pairs[Math.floor(Math.random()*pairs.length)]; board[b]=Math.min(t+1,6); board[a]=null; merges++; score+=TIERS[board[b]].pts; if(score>best){best=score; localStorage.setItem("goobies-best",String(best));} render(); sfx.merge(board[b]);}
-   else {board=Array(9).fill(null); render();}
+   // merge as soon as the board is nearly full (or full), so the watch mode
+   // actually merges instead of sitting on a full board
+   if(pairs.length&&(e.length<=2)){
+     const [a,b]=pairs[Math.floor(Math.random()*pairs.length)]; const oldTier=board[b]; board[b]=Math.min(oldTier+1,6); board[a]=null; merges++; score+=TIERS[board[b]].pts; if(score>best){best=score; localStorage.setItem("goobies-best",String(best));} render(); sfx.merge(board[b]); return;
+   }
+   if(e.length){const i=e[Math.floor(Math.random()*e.length)]; board[i]=0; render(); const c=boardEl.children[i]; if(c)c.classList.add("pop"); return;}
+   board=Array(9).fill(null); render();
  },1100); // only the merge moment makes a sound, like the reel
 }
 
