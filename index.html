@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>گوبی‌ها: بازی ادغام | Five Nights at Goobies</title>
+<meta name="description" content="نسخه وب قابل‌بازی بازی ادغام گوبی‌ها از ریل Five nights at goobies merging game — صفحه ۳×۳، ادغام گوبی پروانه‌ای تا فاکسی و گوبی طلایی، با تمام افکت‌های صوتی.">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--ink:#111;--paper:#fff;--bg:#0e0e1c;--panel:#1b1b2e;--gold:#f5c518;--purple:#7b5cff;--red:#e23b3b}
+body{margin:0;font-family:Vazirmatn,Tahoma,Arial,sans-serif;background:radial-gradient(900px 500px at 50% -10%,#2a2350,#0e0e1c 60%);color:#fff;min-height:100vh;padding:16px 12px 40px}
+.wrap{max-width:520px;margin:0 auto}
+header{text-align:center;margin:6px 0 12px}
+h1{font-size:28px;margin:0;line-height:1.3}
+h1 span{color:var(--gold)}
+.sub{color:#c9c9e0;font-size:13px;margin-top:6px;line-height:1.8}
+.sub a{color:#9fd8ff}
+.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.stat{background:var(--panel);border:1px solid #33335a;border-radius:14px;padding:8px 4px;text-align:center}
+.stat b{display:block;font-size:20px;line-height:1.2}
+.stat small{color:#aab;font-size:11px}
+.board-wrap{background:#fff;border:5px solid #000;border-radius:6px;padding:0;box-shadow:0 12px 40px rgba(0,0,0,.55);position:relative;overflow:hidden}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.cell{aspect-ratio:1/1;background:#fff;border:3px solid #000;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;user-select:none}
+.cell svg{width:92%;height:92%;display:block}
+.cell.empty{cursor:default}
+.cell.selected{outline:5px solid var(--gold);outline-offset:-5px;background:#fff8d6;z-index:2}
+.cell.hint{animation:hint .45s ease infinite alternate}
+@keyframes hint{from{box-shadow:inset 0 0 0 3px #7b5cff}to{box-shadow:inset 0 0 0 6px #7b5cff}}
+.cell.pop svg{animation:pop .28s ease}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+.cell.merge svg{animation:merge .35s ease}
+@keyframes merge{0%{transform:scale(1)}40%{transform:scale(1.25) rotate(-4deg)}100%{transform:scale(1)}}
+.cell.shake{animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.float{position:absolute;left:50%;top:18%;transform:translateX(-50%);font-weight:900;color:#0a7d2e;font-size:22px;text-shadow:0 2px 0 #fff;pointer-events:none;animation:rise .9s ease forwards;z-index:5}
+@keyframes rise{from{opacity:1;top:35%}to{opacity:0;top:0%}}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0}
+button{font-family:inherit;border:0;border-radius:999px;padding:11px 18px;font-size:15px;font-weight:700;cursor:pointer}
+.btn-main{background:var(--gold);color:#111}
+.btn-ghost{background:#2a2a44;color:#fff;border:1px solid #44446a}
+.btn-danger{background:#e23b3b;color:#fff}
+button:active{transform:scale(.97)}
+.card{background:var(--panel);border:1px solid #33335a;border-radius:16px;padding:14px;margin-top:12px;line-height:2;font-size:14px}
+.card h2{font-size:17px;margin:0 0 6px}
+.card h3{font-size:15px;margin:12px 0 4px;color:var(--gold)}
+.card ol,.card ul{margin:4px 0;padding-right:20px}
+.note{background:#2a2410;border:1px solid #6b5a1e;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.9;color:#ffe9a8}
+.ladder{display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+.ladder .step{width:52px;text-align:center;font-size:10px;line-height:1.4;color:#ddd}
+.ladder .step svg{width:48px;height:48px;background:#fff;border:2px solid #000;border-radius:8px}
+.ladder .arr{font-size:18px;color:var(--gold)}
+.overlay{position:fixed;inset:0;background:rgba(5,5,15,.88);display:flex;align-items:center;justify-content:center;padding:18px;z-index:20}
+.overlay .box{background:#fff;color:#111;border:5px solid #000;border-radius:20px;max-width:440px;width:100%;padding:22px;text-align:center;line-height:1.9}
+.overlay .box h2{margin:0 0 8px;font-size:24px}
+.overlay .box p{margin:8px 0;font-size:15px}
+.overlay .box .big{font-size:42px}
+.overlay .box button{margin-top:10px}
+.hidden{display:none!important}
+footer{text-align:center;color:#888;font-size:12px;margin-top:16px;line-height:1.9}
+footer a{color:#9fd8ff}
+.pill{display:inline-block;background:#22223a;border:1px solid #44446a;border-radius:999px;padding:3px 10px;font-size:12px;margin:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>🌙 گوبی‌ها: <span>بازی ادغام</span></h1>
+<div class="sub">Five Nights at Goobies — نسخه وب قابل‌بازی ریل <a href="https://www.instagram.com/reel/DfbfI9qRHbJ/" target="_blank" rel="noopener">@eepygoobie</a><br>
+صفحه ۳×۳ • دو گوبی هم‌شکل را به هم بزن تا به مرحله بالاتر برسند • تا گوبی طلایی ادامه بده</div>
+</header>
+
+<div class="hud">
+<div class="stat"><b id="score">۰</b><small>امتیاز</small></div>
+<div class="stat"><b id="best">۰</b><small>بهترین</small></div>
+<div class="stat"><b id="merges">۰</b><small>ادغام</small></div>
+<div class="stat"><b id="speed">۱٫۲ ثانیه</b><small>سرعت آمدن گوبی</small></div>
+</div>
+
+<div class="board-wrap"><div class="board" id="board"></div></div>
+
+<div class="controls">
+<button class="btn-main" id="startBtn">▶ شروع بازی — تو بازی می‌کنی</button>
+<button class="btn-ghost" id="autoBtn">🎬 فقط تماشا کن (پخش خودکار)</button>
+<button class="btn-ghost" id="soundBtn">🔊 صداها: روشن</button>
+<button class="btn-ghost" id="musicBtn">🎵 موزیک: خاموش</button>
+<button class="btn-danger" id="resetBtn">↺ از اول</button>
+</div>
+
+<div class="card">
+<h2>🎮 چطور بازی کنی؟</h2>
+<ol>
+<li>هر چند ثانیه یک <b>گوبی پروانه‌ای</b> در یک خانه خالی ظاهر می‌شود — هرچه جلوتر بروی، سریع‌تر می‌آید.</li>
+<li>روی یک گوبی بزن تا انتخاب شود، بعد روی یک گوبی <b>هم‌شکل</b> دیگر بزن تا ادغام شوند و به مرحله بالاتر برسند.</li>
+<li>اگر دو گوبی متفاوت را بزنی، صدای خطا می‌شنوی و چیزی ادغام نمی‌شود.</li>
+<li>اگر صفحه پر شود و هیچ دو گوبی هم‌شکلی نماند، بازی تمام است.</li>
+<li>دو <b>فاکسی</b> را ادغام کن تا <b>گوبی طلایی 👑</b> بسازی و ببری!</li>
+</ol>
+<h3>مراحل ادغام</h3>
+<div class="ladder" id="ladder"></div>
+<div class="note">💡 نکته درباره ریل اصلی: ریل اینستاگرام خودش یک بازی قابل‌بازی‌کردن نبود — فقط یک انیمیشن ۲۶ ثانیه‌ای بود که گوبی‌ها خودشان ظاهر و ادغام می‌شدند، بدون امتیاز، تایمر یا دکمه. قوانین، امتیاز و پایان بازی را برای نسخه وب ساختم. آهنگ ریل هم صدای جداگانه بازی نداشت، فقط یک لوپ تند و بریده‌بریده بود؛ پس همان حس لوپ را با WebAudio بازسازی کردم و برای هر اتفاق (ظاهر شدن، انتخاب، ادغام، خطا، برد و باخت) یک صدای جدا گذاشتم.<br>🎮 <b>بازی اصلی را تو بازی می‌کنی</b> — دکمه «فقط تماشا کن» فقط برای دیدن گیم‌پلی است، مثل ریل، و بازی را از دست تو نمی‌گیرد.<br>🌙 <b>صدای ادغام، جذابیت اصلی بازی است:</b> موقع ادغام یک زنگ نرم و آرام‌بخش می‌شنوی — سه نت ملایم از گام پنتاتونیک با کشش طولانی، که هرچه مرحله بالاتر باشد، یک پرده بالاتر و لطیف‌تر می‌شود. بقیه صداها هم عمداً ملایم‌اند تا حس آرامش خراب نشود؛ موزیک تند ریل هم پیش‌فرض خاموش است و فقط با دکمه 🎵 روشن می‌شود.</div>
+<h3>🔊 صداها</h3>
+<div><span class="pill">ظاهر شدن: پاپ نرم</span><span class="pill">انتخاب: کلیک ملایم</span><span class="pill">ادغام: زنگ نرم و آرام‌بخش 🌙</span><span class="pill">خطا: بَز کوتاه و ملایم</span><span class="pill">برد: فانفار آرام</span><span class="pill">باخت: ملودی پایین‌رونده</span><span class="pill">موزیک: لوپ تند ریل (پیش‌فرض خاموش)</span></div>
+</div>
+
+<footer>ساخته‌شده برای مهرشاد • بدون ذخیره‌سازی روی سرور؛ فقط بهترین امتیاز روی همین دستگاه ذخیره می‌شود<br>منبع: ریل <a href="https://www.instagram.com/reel/DfbfI9qRHbJ/" target="_blank" rel="noopener">instagram.com/reel/DfbfI9qRHbJ</a></footer>
+</div>
+
+<div class="overlay" id="startOverlay"><div class="box">
+<div class="big">🦭✨</div>
+<h2>گوبی‌ها: بازی ادغام</h2>
+<p><b>تو بازی می‌کنی</b> — دو گوبی هم‌شکل را به هم بزن تا ادغام شوند؛<br>از گوبی پروانه‌ای شروع کن و به گوبی طلایی برس!<br>🌙 موقع هر ادغام، یک زنگ نرم و آرام‌بخش می‌شنوی.</p>
+<p style="font-size:13px;color:#555">برای شنیدن صداها، اول روی دکمه شروع بزن.<br>موزیک لوپ تند ریل هم از دکمه 🎵 روشن می‌شود.</p>
+<button class="btn-main" id="playBtn" style="font-size:18px;padding:14px 28px">▶ شروع کن</button>
+</div></div>
+
+<div class="overlay hidden" id="endOverlay"><div class="box">
+<div class="big" id="endEmoji">😵</div>
+<h2 id="endTitle">بازی تمام شد!</h2>
+<p id="endText"></p>
+<p>امتیاز: <b id="endScore">۰</b> • بهترین: <b id="endBest">۰</b></p>
+<button class="btn-main" id="againBtn" style="font-size:17px;padding:13px 26px">↺ دوباره بازی کن</button>
+</div></div>
+
+<script>
+"use strict";
+const TIERS=[
+ {name:"گوبی پروانه‌ای",pts:10},
+ {name:"گوبی عینکی",pts:20},
+ {name:"گوبی پلیس",pts:40},
+ {name:"چیکا",pts:80},
+ {name:"بانی",pts:160},
+ {name:"فاکسی",pts:320},
+ {name:"گوبی طلایی 👑",pts:1000}
+];
+const fa=n=>Number(n).toLocaleString("fa-IR");
+const $=id=>document.getElementById(id);
+const boardEl=$("board");
+let board=Array(9).fill(null);
+let score=0, merges=0, best=+(localStorage.getItem("goobies-best")||0);
+let selected=null, running=false, over=false, won=false, autoMode=false;
+let spawnTimer=null, autoTimer=null;
+
+/* ---------- characters as SVG (drawn to match the reel) ---------- */
+function faceBase(inner){
+ return `<svg viewBox="0 0 120 120" aria-hidden="true"><rect x="8" y="22" width="104" height="92" rx="20" fill="#fff" stroke="#111" stroke-width="3"/>${inner}</svg>`;
+}
+function eyes(y){return `<ellipse cx="42" cy="${y}" rx="7" ry="11" fill="#111"/><ellipse cx="78" cy="${y}" rx="7" ry="11" fill="#111"/><circle cx="44" cy="${y-4}" r="2.4" fill="#fff"/><circle cx="80" cy="${y-4}" r="2.4" fill="#fff"/>`;}
+function noseMouth(){return `<path d="M54 84 L66 84 L60 92 Z" fill="#111"/><path d="M44 96 Q60 107 76 96" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round"/>`;}
+function propeller(){
+ return `<path d="M12 26 Q60 -6 108 26 L108 30 L12 30 Z" fill="#e23b3b"/><path d="M60 2 L60 28 L84 28 L84 12 Q72 2 60 2Z" fill="#f5c518"/><path d="M60 2 L60 28 L36 28 L36 12 Q48 2 60 2Z" fill="#2fbf71"/><path d="M84 12 Q96 16 108 26 L108 30 L84 30Z" fill="#2f7de1"/><line x1="60" y1="2" x2="60" y2="-12" stroke="#111" stroke-width="3"/><ellipse cx="46" cy="-13" rx="14" ry="5" fill="#2f7de1" stroke="#111" stroke-width="2"/><ellipse cx="74" cy="-13" rx="14" ry="5" fill="#2f7de1" stroke="#111" stroke-width="2"/>`;
+}
+function charSVG(t){
+ if(t===0) return `<svg viewBox="0 0 120 120"><g transform="translate(0,14)">${propeller()}</g>${faceBase(eyes(66)+noseMouth())}</svg>`;
+ if(t===1) return faceBase(`<rect x="24" y="56" width="34" height="20" rx="8" fill="#111"/><rect x="62" y="56" width="34" height="20" rx="8" fill="#111"/><rect x="54" y="62" width="12" height="5" fill="#111"/>${noseMouth()}`);
+ if(t===2) return `<svg viewBox="0 0 120 120"><rect x="8" y="88" width="104" height="26" rx="8" fill="#6a4fd0" stroke="#111" stroke-width="3"/><path d="M56 88 L64 88 L62 108 L58 108 Z" fill="#111"/><circle cx="92" cy="100" r="6" fill="#f5c518" stroke="#111" stroke-width="2"/>${faceBase(`<path d="M14 30 L106 30 L106 16 Q60 2 14 16 Z" fill="#1b2a4a" stroke="#111" stroke-width="3"/><rect x="10" y="26" width="100" height="9" rx="4" fill="#111"/><circle cx="60" cy="14" r="7" fill="#f5c518" stroke="#111" stroke-width="2"/>${eyes(66)}${noseMouth()}`)}</svg>`;
+ if(t===3) return `<svg viewBox="0 0 120 120"><rect x="8" y="22" width="104" height="92" rx="20" fill="#f7b731" stroke="#111" stroke-width="3"/><path d="M52 22 Q60 4 68 22" fill="#ff7f2a" stroke="#111" stroke-width="2"/><ellipse cx="42" cy="62" rx="7" ry="11" fill="#111"/><ellipse cx="78" cy="62" rx="7" ry="11" fill="#111"/><circle cx="44" cy="58" r="2.4" fill="#fff"/><circle cx="80" cy="58" r="2.4" fill="#fff"/><path d="M50 78 L70 78 L60 92 Z" fill="#ff7f2a" stroke="#111" stroke-width="2"/><path d="M44 98 Q60 107 76 98" fill="none" stroke="#111" stroke-width="3"/><rect x="28" y="100" width="64" height="14" rx="4" fill="#fff" stroke="#111" stroke-width="2"/><text x="60" y="110" text-anchor="middle" font-size="8" font-weight="900" fill="#111" font-family="Arial">LET'S EAT!!!</text></svg>`;
+ if(t===4) return `<svg viewBox="0 0 120 120"><ellipse cx="32" cy="22" rx="11" ry="24" fill="#6a4fd0" stroke="#111" stroke-width="3"/><ellipse cx="88" cy="22" rx="11" ry="24" fill="#6a4fd0" stroke="#111" stroke-width="3"/><ellipse cx="32" cy="24" rx="5" ry="14" fill="#a78bff"/><ellipse cx="88" cy="24" rx="5" ry="14" fill="#a78bff"/><rect x="8" y="22" width="104" height="92" rx="20" fill="#6a4fd0" stroke="#111" stroke-width="3"/>${eyes(62)}<path d="M54 80 L66 80 L60 88 Z" fill="#111"/><path d="M44 94 Q60 104 76 94" fill="none" stroke="#111" stroke-width="3"/><path d="M48 106 L60 100 L72 106 L60 112 Z" fill="#e23b3b" stroke="#111" stroke-width="2"/></svg>`;
+ if(t===5) return `<svg viewBox="0 0 120 120"><path d="M18 34 L28 6 L44 28 Z" fill="#e23b3b" stroke="#111" stroke-width="3"/><path d="M102 34 L92 6 L76 28 Z" fill="#e23b3b" stroke="#111" stroke-width="3"/><rect x="8" y="22" width="104" height="92" rx="20" fill="#e23b3b" stroke="#111" stroke-width="3"/><path d="M22 42 L58 58 L22 62 Z" fill="#111"/><ellipse cx="42" cy="62" rx="8" ry="11" fill="#111"/><ellipse cx="80" cy="58" rx="7" ry="10" fill="#fff" stroke="#111" stroke-width="2"/><circle cx="82" cy="58" r="4" fill="#111"/><ellipse cx="60" cy="84" rx="22" ry="14" fill="#ff9db0" stroke="#111" stroke-width="2"/><ellipse cx="60" cy="80" rx="7" ry="5" fill="#111"/><path d="M48 92 L52 100 L56 92 Z" fill="#fff" stroke="#111" stroke-width="1.5"/><path d="M66 92 L70 100 L74 92 Z" fill="#fff" stroke="#111" stroke-width="1.5"/></svg>`;
+ return `<svg viewBox="0 0 120 120"><defs><linearGradient id="gld" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#f5a623"/></linearGradient></defs><path d="M30 26 L40 10 L50 22 L60 6 L70 22 L80 10 L90 26 L90 34 L30 34 Z" fill="#f5c518" stroke="#111" stroke-width="2"/><rect x="8" y="22" width="104" height="92" rx="20" fill="url(#gld)" stroke="#111" stroke-width="3"/><ellipse cx="42" cy="62" rx="7" ry="11" fill="#111"/><ellipse cx="78" cy="62" rx="7" ry="11" fill="#111"/><circle cx="44" cy="58" r="2.4" fill="#fff"/><circle cx="80" cy="58" r="2.4" fill="#fff"/><path d="M54 82 L66 82 L60 90 Z" fill="#111"/><path d="M42 96 Q60 108 78 96" fill="none" stroke="#111" stroke-width="3"/><text x="18" y="30" font-size="16">✦</text><text x="98" y="44" font-size="14">✦</text></svg>`;
+}
+
+/* ---------- audio: all SFX + music loop, WebAudio only, no files ---------- */
+let AC=null, master=null, sfxGain=null, musicGain=null, soundOn=true, musicOn=false, musicTimer=null, nextNote=0, step=0;
+function audioInit(){
+ if(AC) return;
+ try{
+  AC=new (window.AudioContext||window.webkitAudioContext)();
+  master=AC.createGain(); master.gain.value=.9; master.connect(AC.destination);
+  sfxGain=AC.createGain(); sfxGain.gain.value=.9; sfxGain.connect(master);
+  musicGain=AC.createGain(); musicGain.gain.value=.16; musicGain.connect(master); // music stays quiet — merge chimes are the star
+ }catch(e){AC=null;}
+}
+function tone(f,dur,type,vol,when,slide){
+ if(!AC||!soundOn) return;
+ const t=when||AC.currentTime, o=AC.createOscillator(), g=AC.createGain();
+ o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
+ if(slide) o.frequency.exponentialRampToValueAtTime(slide,t+dur);
+ g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol||.25,t+.01); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+ o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t+dur+.05);
+}
+function noiseBurst(dur,vol,filterFreq){
+ if(!AC||!soundOn) return;
+ const t=AC.currentTime, len=Math.floor(AC.sampleRate*dur), buf=AC.createBuffer(1,len,AC.sampleRate), d=buf.getChannelData(0);
+ for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*(1-i/len);
+ const src=AC.createBufferSource(); src.buffer=buf;
+ const f=AC.createBiquadFilter(); f.type="highpass"; f.frequency.value=filterFreq||1200;
+ const g=AC.createGain(); g.gain.value=vol||.18;
+ src.connect(f); f.connect(g); g.connect(sfxGain); src.start(t);
+}
+const sfx={
+ /* soft pop on spawn — deliberately gentle so it never breaks the calm */
+ pop(){tone(440,.22,"sine",.14,0,660);},
+ click(){tone(620,.07,"sine",.08);},
+ /* CALMING merge sound — the heart of the game:
+    three soft sine notes from the pentatonic scale, slow and long-decaying,
+    a little higher and softer with each tier. No harsh ding, no noise burst. */
+ merge(tier){
+   const scale=[523.25,587.33,659.25,783.99,880.00,1046.50,1174.66];
+   const base=scale[Math.min(tier,6)];
+   const notes=[base, base*1.189, base*1.498]; // soft major-pentatonic rise
+   notes.forEach((f,i)=>tone(f,.85,"sine",.16,AC.currentTime+i*.13));
+   tone(base/2,.9,"sine",.07,AC.currentTime); // warm low root underneath
+   tone(base*2,.7,"sine",.05,AC.currentTime+.26); // faint shimmer, not a ding
+ },
+ error(){tone(140,.18,"sine",.12,0,95);},
+ over(){[392,330,262,196].forEach((f,i)=>tone(f,.28,"triangle",.22,AC.currentTime+i*.18));},
+ win(){[523,659,784,1046,1318,1568].forEach((f,i)=>tone(f,.22,"triangle",.24,AC.currentTime+i*.1)); tone(2093,.5,"sine",.14,AC.currentTime+.6);}
+};
+/* music: fast chopped loop like the reel — 140 BPM, kick + hat + bass + stutter lead */
+const BASS=[55,0,55,0,82.4,0,55,0,65.4,0,55,0,98,0,82.4,0];
+const LEAD=[880,880,0,880,660,0,880,880,0,990,0,880,740,0,880,0];
+function musicStep(){
+ if(!AC||!musicOn) return;
+ const spb=60/140/4, t=nextNote;
+ // kick on quarters
+ if(step%4===0){const o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(45,t+.12);g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.001,t+.14);o.connect(g);g.connect(musicGain);o.start(t);o.stop(t+.16);}
+ // hat offbeat
+ if(step%2===1){const len=Math.floor(AC.sampleRate*.03),buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);const s=AC.createBufferSource();s.buffer=buf;const f=AC.createBiquadFilter();f.type="highpass";f.frequency.value=7000;const g=AC.createGain();g.gain.value=.12;s.connect(f);f.connect(g);g.connect(musicGain);s.start(t);}
+ const b=BASS[step%16]; if(b){const o=AC.createOscillator(),g=AC.createGain();o.type="square";o.frequency.value=b;g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+spb*.9);o.connect(g);g.connect(musicGain);o.start(t);o.stop(t+spb);}
+ const l=LEAD[step%16]; if(l){const o=AC.createOscillator(),g=AC.createGain();o.type="sawtooth";o.frequency.value=l;g.gain.setValueAtTime(.07,t);g.gain.exponentialRampToValueAtTime(.001,t+spb*.8);o.connect(g);g.connect(musicGain);o.start(t);o.stop(t+spb);}
+ nextNote+=spb; step++;
+}
+function startMusic(){audioInit(); if(!AC) return; musicOn=true; nextNote=AC.currentTime+.05; step=0; if(musicTimer) clearInterval(musicTimer); musicTimer=setInterval(()=>{while(nextNote<AC.currentTime+.18) musicStep();},40); $("musicBtn").textContent="🎵 موزیک: روشن";}
+function stopMusic(){musicOn=false; if(musicTimer){clearInterval(musicTimer);musicTimer=null;} $("musicBtn").textContent="🎵 موزیک: خاموش";}
+
+/* ---------- board ---------- */
+function render(){
+ boardEl.innerHTML="";
+ board.forEach((t,i)=>{
+   const c=document.createElement("div"); c.className="cell"+(t===null?" empty":"")+(selected===i?" selected":"");
+   c.dataset.i=i;
+   if(t!==null){c.innerHTML=charSVG(t); c.title=TIERS[t].name;}
+   c.addEventListener("click",()=>onCell(i,c));
+   boardEl.appendChild(c);
+ });
+ $("score").textContent=fa(score); $("best").textContent=fa(best);
+ $("merges").textContent=fa(merges);
+ $("speed").textContent=fa(spawnInterval()/1000).replace("٫",".")+" ثانیه";
+}
+function spawnInterval(){return Math.max(650,1200-merges*30);}
+function emptyCells(){return board.map((v,i)=>v===null?i:-1).filter(i=>i>=0);}
+function spawnOne(){
+ if(!running||over) return;
+ const e=emptyCells(); if(!e.length){checkEnd(); return;}
+ const i=e[Math.floor(Math.random()*e.length)];
+ board[i]=(score>300&&Math.random()<.12)?1:0;
+ render();
+ const cell=boardEl.children[i]; if(cell) cell.classList.add("pop");
+ sfx.pop();
+ checkEnd();
+}
+function hasMerge(){
+ for(let i=0;i<9;i++) for(let j=i+1;j<9;j++) if(board[i]!==null&&board[i]===board[j]) return true;
+ return false;
+}
+function checkEnd(){
+ if(emptyCells().length===0&&!hasMerge()){endGame(false);}
+}
+function onCell(i,el){
+ if(!running||over||autoMode) return; // in watch-only autoplay the player does not play — this is your game
+ audioInit(); if(AC&&AC.state==="suspended") AC.resume();
+ if(board[i]===null){ if(selected!==null){selected=null; render();} return; }
+ if(selected===null){selected=i; sfx.click(); render(); return;}
+ if(selected===i){selected=null; render(); return;}
+ if(board[selected]===board[i]){
+   const tier=board[i], from=selected, to=i;
+   board[to]=Math.min(tier+1,6); board[from]=null; selected=null;
+   score+=TIERS[board[to]].pts; merges++;
+   if(score>best){best=score; localStorage.setItem("goobies-best",String(best));}
+   render();
+   const cell=boardEl.children[to]; if(cell){cell.classList.add("merge"); const f=document.createElement("div"); f.className="float"; f.textContent="+"+fa(TIERS[board[to]].pts); cell.appendChild(f);}
+   sfx.merge(tier);
+   if(board[to]===6&&!won){won=true; setTimeout(()=>endGame(true),450);}
+ }else{
+   sfx.error(); el.classList.add("shake"); const prev=boardEl.children[selected]; if(prev) prev.classList.add("shake");
+   setTimeout(()=>{selected=null; render();},300);
+ }
+}
+function startGame(){
+ audioInit(); if(AC&&AC.state==="suspended") AC.resume();
+ board=Array(9).fill(null); score=0; merges=0; selected=null; over=false; won=false; running=true; autoMode=false;
+ if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
+ $("startOverlay").classList.add("hidden"); $("endOverlay").classList.add("hidden");
+ $("startBtn").textContent="⏸ توقف"; $("autoBtn").textContent="🎬 فقط تماشا کن (پخش خودکار)";
+ // seed like the reel: middle row first
+ [3,4,5].forEach((idx,k)=>setTimeout(()=>{if(running&&board[idx]===null){board[idx]=0; render(); const c=boardEl.children[idx]; if(c)c.classList.add("pop"); sfx.pop();}},k*350));
+ if(spawnTimer) clearInterval(spawnTimer);
+ spawnTimer=setInterval(()=>{ if(spawnTimer) clearInterval(spawnTimer); spawnTimer=setInterval(spawnOne,spawnInterval()); spawnOne(); },1200);
+ render();
+}
+function stopGame(){running=false; if(spawnTimer){clearInterval(spawnTimer);spawnTimer=null;} if(autoTimer){clearInterval(autoTimer);autoTimer=null;} autoMode=false; $("startBtn").textContent="▶ شروع بازی — تو بازی می‌کنی"; $("autoBtn").textContent="🎬 فقط تماشا کن (پخش خودکار)";}
+function endGame(win){
+ over=true; running=false;
+ if(spawnTimer){clearInterval(spawnTimer);spawnTimer=null;}
+ if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
+ $("endEmoji").textContent=win?"👑":"😵";
+ $("endTitle").textContent=win?"🏆 گوبی طلایی ساختی!":"بازی تمام شد!";
+ $("endText").textContent=win?"دو فاکسی را ادغام کردی و گوبی طلایی شد! آفرین!":"صفحه پر شد و هیچ دو گوبی هم‌شکلی برای ادغام نماند.";
+ $("endScore").textContent=fa(score); $("endBest").textContent=fa(best);
+ $("endOverlay").classList.remove("hidden");
+ $("startBtn").textContent="▶ شروع بازی";
+ if(win) sfx.win(); else sfx.over();
+}
+function autoPlay(){
+ audioInit(); if(AC&&AC.state==="suspended") AC.resume();
+ if(autoMode){stopGame(); render(); return;}
+ board=Array(9).fill(null); score=0; merges=0; selected=null; over=false; won=false; running=true; autoMode=true;
+ $("startOverlay").classList.add("hidden"); $("endOverlay").classList.add("hidden");
+ $("autoBtn").textContent="⏸ توقف تماشا"; $("startBtn").textContent="▶ شروع بازی — تو بازی می‌کنی";
+ render();
+ autoTimer=setInterval(()=>{
+   if(!autoMode) return;
+   const e=emptyCells();
+   if(e.length){const i=e[Math.floor(Math.random()*e.length)]; board[i]=0; render(); const c=boardEl.children[i]; if(c)c.classList.add("pop"); sfx.pop(); return;}
+   // full: merge a random pair like the reel, then keep going
+   const pairs=[]; for(let a=0;a<9;a++)for(let b=a+1;b<9;b++) if(board[a]!==null&&board[a]===board[b]) pairs.push([a,b]);
+   if(pairs.length){const [a,b]=pairs[Math.floor(Math.random()*pairs.length)]; const t=board[b]; board[b]=Math.min(t+1,6); board[a]=null; merges++; score+=TIERS[board[b]].pts; if(score>best){best=score; localStorage.setItem("goobies-best",String(best));} render(); sfx.merge(t);}
+   else {board=Array(9).fill(null); render();}
+ },1100); // slower than the reel's ~0.8s so each calming merge can breathe
+}
+
+/* ---------- wire up ---------- */
+$("startBtn").addEventListener("click",()=>{ if(running&&!autoMode){stopGame();} else if(!running){startGame();} else {stopGame();} });
+$("playBtn").addEventListener("click",startGame);
+$("againBtn").addEventListener("click",startGame);
+$("resetBtn").addEventListener("click",()=>{stopGame(); board=Array(9).fill(null); score=0; merges=0; selected=null; over=false; won=false; render();});
+$("autoBtn").addEventListener("click",autoPlay);
+$("soundBtn").addEventListener("click",()=>{audioInit(); soundOn=!soundOn; $("soundBtn").textContent=soundOn?"🔊 صداها: روشن":"🔇 صداها: خاموش"; if(soundOn) sfx.click();});
+$("musicBtn").addEventListener("click",()=>{audioInit(); if(musicOn) stopMusic(); else startMusic();});
+
+/* ladder */
+$("ladder").innerHTML=TIERS.map((t,i)=>`<div class="step">${charSVG(i)}<div>${t.name}</div></div>${i<TIERS.length-1?'<div class="arr">←</div>':""}`).join("");
+render();
+</script>
+</body>
+</html>
