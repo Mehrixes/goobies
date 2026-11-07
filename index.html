@@ -169,9 +169,20 @@ function spawnInterval(){
   return Math.max(900,2000-merges*30); // calm pace: a new goobie every ~2s at first, faster only as you merge more
 }
 function emptyCells(){return board.map((v,i)=>v===null?i:-1).filter(i=>i>=0);}
+function fastFillNeeded(){
+  const e=emptyCells().length;
+  return e>0&&e<9&&(e<=2||!hasMerge()); // stuck (nothing mergeable) or nearly full — never on a fresh empty board
+}
+function fillAllEmpty(){
+  const e=emptyCells(); // every empty cell at once, in a fraction of a second — no waiting cell by cell
+  e.forEach(i=>{ board[i]=(score>300&&Math.random()<.12)?1:0; });
+  render();
+  e.forEach(i=>{ const c=boardEl.children[i]; if(c) c.classList.add("pop"); });
+}
 function spawnOne(){
  if(!running||over) return;
  const e=emptyCells(); if(!e.length){checkEnd(); return;}
+ if(fastFillNeeded()){ fillAllEmpty(); checkEnd(); return; }
  const i=e[Math.floor(Math.random()*e.length)];
  board[i]=(score>300&&Math.random()<.12)?1:0;
  render();
@@ -201,6 +212,9 @@ function onCell(i,el){
    const cell=boardEl.children[to]; if(cell){cell.classList.add("merge"); const f=document.createElement("div"); f.className="float"; f.textContent="+"+fa(TIERS[board[to]].pts); cell.appendChild(f);}
    sfx.merge(board[to]);
    if(board[to]===5&&!won){won=true; setTimeout(()=>endGame(true),450);}
+   // after a merge the board can be stuck: fill every empty cell at once,
+   // 300ms later only so the merge itself is still seen — still a fraction of a second
+   if(!won) setTimeout(()=>{ if(running&&!over&&fastFillNeeded()){ fillAllEmpty(); checkEnd(); } },300);
  }else{
    el.classList.add("shake"); const prev=boardEl.children[selected]; if(prev) prev.classList.add("shake");
    setTimeout(()=>{selected=null; render();},300);
