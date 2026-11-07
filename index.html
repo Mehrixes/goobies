@@ -238,7 +238,7 @@ function render(){
  $("merges").textContent=fa(merges);
  $("speed").textContent=fa(spawnInterval()/1000).replace("٫",".")+" ثانیه";
 }
-function spawnInterval(){return Math.max(650,1200-merges*30);}
+function spawnInterval(){return Math.max(900,2000-merges*30);} // calm pace: a new goobie every ~2s at first, faster only as you merge more
 function emptyCells(){return board.map((v,i)=>v===null?i:-1).filter(i=>i>=0);}
 function spawnOne(){
  if(!running||over) return;
@@ -286,7 +286,7 @@ function startGame(){
  // seed like the reel: middle row first
  [3,4,5].forEach((idx,k)=>setTimeout(()=>{if(running&&board[idx]===null){board[idx]=0; render(); const c=boardEl.children[idx]; if(c)c.classList.add("pop"); sfx.pop();}},k*350));
  if(spawnTimer) clearInterval(spawnTimer);
- spawnTimer=setInterval(()=>{ if(spawnTimer) clearInterval(spawnTimer); spawnTimer=setInterval(spawnOne,spawnInterval()); spawnOne(); },1200);
+ spawnTimer=setInterval(()=>{ if(spawnTimer) clearInterval(spawnTimer); spawnTimer=setInterval(spawnOne,spawnInterval()); spawnOne(); },spawnInterval());
  render();
 }
 function stopGame(){running=false; if(spawnTimer){clearInterval(spawnTimer);spawnTimer=null;} if(autoTimer){clearInterval(autoTimer);autoTimer=null;} autoMode=false; $("startBtn").textContent="▶ شروع بازی — تو بازی می‌کنی"; $("autoBtn").textContent="🎬 فقط تماشا کن (پخش خودکار)";}
