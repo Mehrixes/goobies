@@ -162,7 +162,12 @@ function render(){
  });
  $("score").textContent=fa(score); $("best").textContent=fa(best);
 }
-function spawnInterval(){return Math.max(900,2000-merges*30);} // calm pace: a new goobie every ~2s at first, faster only as you merge more
+function spawnInterval(){
+  const e=emptyCells().length;
+  if(e<=2) return 350; // one or two spots left: finish fast, no waiting
+  if(e<=4&&!hasMerge()) return 350; // several characters left but none mergeable: fill fast
+  return Math.max(900,2000-merges*30); // calm pace: a new goobie every ~2s at first, faster only as you merge more
+}
 function emptyCells(){return board.map((v,i)=>v===null?i:-1).filter(i=>i>=0);}
 function spawnOne(){
  if(!running||over) return;
